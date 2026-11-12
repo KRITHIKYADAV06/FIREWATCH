@@ -1,0 +1,11 @@
+pandas
+numpy
+scipy
+scikit-learn
+geopandas
+folium
+streamlit-folium
+plotly
+streamlit
+pyarrow
+python-dotenv
