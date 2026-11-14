@@ -136,3 +136,12 @@ def test_hotspots_noaa21_grid_edge_and_cap():
 def test_validation_and_csv():
     assert da.get_validation() == {}           # file missing -> {} (never invented)
     assert da.to_csv(pd.DataFrame({"a": [1]})).startswith(b"a")
+
+
+def test_input_validation_and_no_invented_dates():
+    with pytest.raises(ValueError):
+        da.cells_in_aoi((-200, 30, 75, 76))                    # impossible latitude
+    with pytest.raises(ValueError):
+        da.monthly_series([CELL_A], "0001-01-01", "9999-12-31")  # out-of-range dates
+    f = da.fire_now([CELL_B])          # CELL_B has no hotspot rows -> no invented date
+    assert f["latest_observation_date"] is None
