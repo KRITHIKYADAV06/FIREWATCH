@@ -233,12 +233,18 @@ def _resolve_column_and_metric(mode: str, metric: str) -> Tuple[str, str]:
 
 def _parse_year_month(date_or_year: Union[str, int, pd.Timestamp], is_end: bool = False) -> Tuple[int, int]:
     """Convert 'YYYY-MM-DD', 'YYYY-MM', int year, or Timestamp into (year, month)."""
-    if isinstance(date_or_year, (int, np.integer)):
-        return int(date_or_year), (12 if is_end else 1)
+    if isinstance(date_or_year, (int, np.integer)) or (str(date_or_year).strip().isdigit() and len(str(date_or_year).strip()) == 4):
+        year = int(str(date_or_year).strip())
+        if not 2000 <= year <= 2100:
+            raise ValueError(f"Year {year} is outside the supported range 2000-2100.")
+        return year, (12 if is_end else 1)
     s = str(date_or_year).strip()
-    if len(s) == 4 and s.isdigit():
-        return int(s), (12 if is_end else 1)
-    dt = pd.to_datetime(s)
+    try:
+        dt = pd.to_datetime(s)
+    except (ValueError, OverflowError, pd.errors.OutOfBoundsDatetime) as exc:
+        raise ValueError(f"Invalid date '{date_or_year}'. Use YYYY-MM or YYYY-MM-DD.") from exc
+    if not 2000 <= int(dt.year) <= 2100:
+        raise ValueError(f"Date '{date_or_year}' is outside the supported range 2000-2100.")
     return int(dt.year), int(dt.month)
 
 
@@ -453,6 +459,8 @@ def cells_in_aoi(
         if len(bbox) != 4:
             raise ValueError("bbox must have 4 elements: (min_lat, max_lat, min_lon, max_lon).")
         min_lat, max_lat, min_lon, max_lon = (float(bbox[0]), float(bbox[1]), float(bbox[2]), float(bbox[3]))
+        if not (-90 <= min_lat <= 90 and -90 <= max_lat <= 90 and -180 <= min_lon <= 180 and -180 <= max_lon <= 180):
+            raise ValueError("bbox latitudes must be within -90..90 and longitudes within -180..180.")
         if min_lat > max_lat or min_lon > max_lon:
             raise ValueError(
                 f"Invalid bbox ({min_lat}, {max_lat}, {min_lon}, {max_lon}): "
@@ -467,6 +475,8 @@ def cells_in_aoi(
         if radius_km is None or float(radius_km) < 0:
             raise ValueError("radius_km must be a non-negative number when point is provided.")
         lat0, lon0 = float(point[0]), float(point[1])
+        if not (-90 <= lat0 <= 90 and -180 <= lon0 <= 180):
+            raise ValueError("point must be (lat, lon) with lat in -90..90 and lon in -180..180.")
         dists = _haversine_km(lat0, lon0, lats, lons)
         mask = dists <= float(radius_km)
         return cells_df.loc[mask, "cell_id"].tolist()
@@ -767,7 +777,7 @@ def fire_now(
 
     provenance = "unknown"
     is_nrt: Optional[bool] = None
-    latest_date: Optional[str] = f"{latest_year:04d}-{latest_month:02d}"
+    latest_date: Optional[str] = None  # only set from real hotspot records, never invented
 
     if not pts.empty:
         if "date" in pts.columns:
