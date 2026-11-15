@@ -9,7 +9,9 @@ not to add any number, cause or prediction. The app labels the result
 "AI-generated".
 
 Key:   GEMINI_API_KEY  (environment, .env in the repo root, or st.secrets)
-Model: GEMINI_MODEL    (optional, default "gemini-2.5-flash")
+Model: GEMINI_MODEL    (optional, default "gemini-3.5-flash-lite";
+       gemini-2.5-flash is no longer offered to new API keys, and the larger
+       flash models can take longer than TIMEOUT_S to answer)
 The key is sent in a request header, never in the URL, and is never printed.
 """
 import json
@@ -20,7 +22,7 @@ import requests
 
 ROOT = Path(__file__).resolve().parents[1]
 API_URL = "https://generativelanguage.googleapis.com/v1beta/models/{model}:generateContent"
-DEFAULT_MODEL = "gemini-2.5-flash"
+DEFAULT_MODEL = "gemini-3.5-flash-lite"
 TIMEOUT_S = 30
 
 INSTRUCTION = ("Write 3-4 plain sentences for a farmer or official. "

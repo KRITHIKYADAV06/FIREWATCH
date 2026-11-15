@@ -82,7 +82,7 @@ def test_key_in_header_not_url_and_default_model(posts):
     sent = posts[0]
     assert sent["headers"]["x-goog-api-key"] == FAKE_KEY
     assert FAKE_KEY not in sent["url"]
-    assert sent["url"].endswith("/models/gemini-2.5-flash:generateContent")
+    assert sent["url"].endswith("/models/gemini-3.5-flash-lite:generateContent")
 
 
 def test_model_from_env(posts, monkeypatch):
