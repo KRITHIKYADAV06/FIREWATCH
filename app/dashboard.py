@@ -18,8 +18,10 @@ ROOT = Path(__file__).resolve().parents[1]
 sys.path.insert(0, str(ROOT / "src"))
 sys.path.insert(0, str(Path(__file__).resolve().parent))
 
+import ai_summary  # noqa: E402
 import data_access as da  # noqa: E402
 import geo  # noqa: E402
+import weather  # noqa: E402
 from frontend_utils import (  # noqa: E402
     DEFAULT_AOI, aoi_label, clamp_month_range, file_signature,
     month_end, month_options, month_start, normalize_aoi, safe_script_json,
@@ -147,6 +149,134 @@ def provisional_month(version: tuple) -> str | None:
 def _validation() -> dict | None:
     values = da.get_validation()
     return _scalar(values) if isinstance(values, dict) and values else None
+
+
+def _aoi_centre(aoi: dict) -> tuple[float, float]:
+    """(lat, lon) centre of the AOI: bbox middle, point itself, or vertex mean."""
+    if aoi["type"] == "bbox":
+        lat_min, lat_max, lon_min, lon_max = aoi["coords"]
+        return (lat_min + lat_max) / 2, (lon_min + lon_max) / 2
+    if aoi["type"] == "point":
+        return tuple(aoi["coords"])
+    lats, lons = zip(*aoi["coords"])
+    return sum(lats) / len(lats), sum(lons) / len(lons)
+
+
+def _round(value, digits=1):
+    value = _scalar(value)
+    return round(float(value), digits) if isinstance(value, (int, float)) else None
+
+
+def _aoi_trend(rows: list[dict]) -> dict | None:
+    """Theil-Sen slope of yearly harmonized totals (complete years only)."""
+    from scipy import stats
+
+    frame = pd.DataFrame(rows)[["year", "month", "harmonized_count"]].dropna()
+    per_year = frame.groupby("year").agg(total=("harmonized_count", "sum"), months=("month", "nunique"))
+    per_year = per_year[per_year["months"] == 12]["total"]
+    if len(per_year) < 5:
+        return None
+    years = per_year.index.to_numpy(dtype=float)
+    slope = stats.theilslopes(per_year.to_numpy(dtype=float), years)[0]
+    p_value = stats.kendalltau(years, per_year.to_numpy(dtype=float)).pvalue
+    if p_value < 0.05:
+        label = "Increasing" if slope > 0 else "Decreasing"
+    else:
+        label = "No significant trend"
+    return {"years": f"{int(years[0])}-{int(years[-1])}", "label": label,
+            "theil_sen_slope_hotspots_per_year": _round(slope),
+            "mann_kendall_p_value": _round(p_value, 3)}
+
+
+def _summary_facts(aoi: dict, rows: list[dict]) -> dict:
+    """Only FIREWATCH's own computed numbers; missing pieces are simply left out."""
+    facts: dict = {}
+    try:
+        now = da.fire_now(da.cells_in_aoi(aoi))
+        if now.get("year") and not now.get("insufficient"):
+            facts["latest_month"] = {
+                "month": f"{now['year']}-{now['month']:02d}",
+                "hotspots": _round(now.get("current")),
+                "historical_median_same_month": _round(now.get("median")),
+                "p90_same_month": _round(now.get("p90")),
+                "unusual_above_p90": bool(now.get("unusual")),
+                "baseline_years": now.get("n_baseline_years"),
+            }
+    except Exception:  # noqa: BLE001 - a summary must never crash the page
+        pass
+    try:
+        trend = _aoi_trend(rows)
+        if trend:
+            facts["yearly_trend"] = trend
+    except Exception:  # noqa: BLE001
+        pass
+    val = _validation() or {}
+    if val.get("mae") is not None:
+        facts["harmonization_validation"] = {
+            "test_years": val.get("test_years"),
+            "mae_hotspots_per_month": _round(val.get("mae")),
+            "mape_pct": _round(val.get("mape")),
+        }
+    return facts
+
+
+def _ai_summary_box(aoi: dict, rows: list[dict]):
+    with st.container(border=True):
+        st.markdown("#### AI summary (AI-generated, based only on FIREWATCH numbers)")
+        key = (json.dumps(aoi, sort_keys=True), st.session_state["_data_version"])
+        if st.button("Generate summary"):
+            text = None
+            try:
+                with st.spinner("Asking Gemini to summarise FIREWATCH numbers…"):
+                    facts = _summary_facts(aoi, rows)
+                    text = ai_summary.summarize(aoi_label(aoi), facts) if facts else None
+            except Exception:  # noqa: BLE001
+                text = None
+            st.session_state["_ai_summary"] = (key, text)
+        cached = st.session_state.get("_ai_summary")
+        if cached and cached[0] == key:
+            if cached[1]:
+                st.write(cached[1])
+                st.caption("AI-generated text. It may be imperfect; check it against the charts above.")
+            else:
+                st.info("AI summary unavailable")
+
+
+def _weather_expander(aoi: dict):
+    with st.expander("Weather context (NASA POWER)"):
+        try:
+            lat, lon = _aoi_centre(aoi)
+            start_year = int(st.session_state["start_month"][:4])
+            end_year = int(st.session_state["end_month"][:4])
+            st.caption(f"Monthly rainfall and temperature at the area centre "
+                       f"({lat:.2f}°N, {lon:.2f}°E), {start_year}-{end_year}. "
+                       "Context only: this does not show what caused any fire.")
+            df = weather.monthly_weather(lat, lon, start_year, end_year)
+            if df is None and end_year > start_year:
+                # POWER may not serve monthly values for an unfinished year yet.
+                df = weather.monthly_weather(lat, lon, start_year, end_year - 1)
+                if df is not None:
+                    st.caption(f"NASA POWER had no monthly values for {end_year} yet; showing to {end_year - 1}.")
+            if df is None:
+                st.info("Weather data unavailable (NASA POWER could not be reached).")
+                return
+            import plotly.graph_objects as go
+
+            when = pd.to_datetime(dict(year=df["year"], month=df["month"], day=1))
+            fig = go.Figure()
+            fig.add_bar(x=when, y=df["rain_mm_day"], name="Rainfall (mm/day)", marker_color="#0072B2")
+            fig.add_scatter(x=when, y=df["temp_c"], name="Temperature (°C)", yaxis="y2",
+                            mode="lines", line=dict(color="#E69F00", width=2))
+            fig.update_layout(
+                height=360, margin=dict(l=10, r=10, t=30, b=10),
+                yaxis=dict(title="Rainfall (mm/day)"),
+                yaxis2=dict(title="Temperature (°C)", overlaying="y", side="right"),
+                legend=dict(orientation="h", y=1.12),
+            )
+            st.plotly_chart(fig, width="stretch")
+            st.caption("Source: NASA POWER (power.larc.nasa.gov), monthly point data.")
+        except Exception:  # noqa: BLE001 - weather is optional context
+            st.info("Weather data unavailable.")
 
 
 def _ensure_state():
@@ -279,6 +409,9 @@ def page_dashboard():
     except (ValueError, TypeError, KeyError, OSError, RuntimeError) as exc:
         st.error("The calendar could not be generated from the available data.")
         st.caption(f"Technical detail: {exc}")
+        rows = []
+    _ai_summary_box(aoi, rows)
+    _weather_expander(aoi)
 
 
 def page_downloads():
