@@ -1,0 +1,290 @@
+<!DOCTYPE html>
+<html lang="en"><head><meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<title>FIREWATCH</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link href="https://fonts.googleapis.com/css2?family=Bricolage+Grotesque:wght@600;800&family=IBM+Plex+Sans:wght@400;500;600&display=swap" rel="stylesheet">
+<script src="https://cdnjs.cloudflare.com/ajax/libs/plotly.js/2.35.2/plotly.min.js"></script>
+<style>
+:root{color-scheme:dark;--bg:#050912;--panel:rgba(12,20,42,.68);--edge:#24365C;--ash:#B4C0DA;--ember:#FF7A1A;--flame:#FF3B30;--txt:#E6ECF8;--cy:#5AC8FA;--yl:#FFD60A;
+box-sizing:border-box;padding-top:env(safe-area-inset-top,0px);padding-bottom:env(safe-area-inset-bottom,0px)}
+html{scroll-padding-top:env(safe-area-inset-top,0px)}
+*{box-sizing:border-box}
+body{margin:0;background:var(--bg);color:var(--txt);font:16px/1.55 'IBM Plex Sans',system-ui,sans-serif;-webkit-text-size-adjust:100%}
+h1,h2,h3{font-family:'Bricolage Grotesque',system-ui,sans-serif;margin:0}
+#bg{position:fixed;inset:0;width:100%;height:100%;z-index:0}
+.sr{position:absolute;width:1px;height:1px;overflow:hidden;clip:rect(0 0 0 0);white-space:nowrap}
+.skip{position:absolute;left:-999px;top:0;background:var(--ember);color:#000;padding:8px 12px;z-index:20}.skip:focus{left:8px}
+.wrap{position:relative;z-index:1;display:grid;grid-template-columns:280px minmax(0,1fr);gap:16px 20px;max-width:1320px;margin:auto;padding:16px}
+.head,.banner,footer,.ftoggle{grid-column:1/-1;min-width:0}
+.head{display:flex;justify-content:space-between;align-items:flex-end;gap:12px 24px;flex-wrap:wrap;border-bottom:1px solid var(--edge);padding-bottom:14px}
+.brand{display:flex;gap:14px;align-items:center;min-width:0}.logo{font-size:2.4rem;line-height:1}
+h1{font-size:2.3rem;font-weight:800;letter-spacing:-.01em;background:linear-gradient(90deg,#fff 30%,var(--ember));-webkit-background-clip:text;background-clip:text;color:transparent}
+.brand p{margin:2px 0 0;color:var(--ash);max-width:60ch}
+.chips{display:flex;gap:8px;flex-wrap:wrap}.chip{border:1px solid var(--edge);background:var(--panel);border-radius:999px;padding:4px 12px;font-size:.82rem;font-weight:600}
+.chip.demo{border-color:#b38600;color:var(--yl)}.chip.real{border-color:#2f8f5b;color:#7be0a8}
+.banner{border-radius:10px;padding:10px 14px;font-size:.92rem}.banner[hidden]{display:none}
+.banner.demo{background:rgba(60,40,0,.5);border:1px solid #8a6a10;color:#f3d98a}
+.banner.err{background:rgba(70,10,10,.55);border:1px solid var(--flame)}
+.banner button{margin-left:10px}
+aside,.card,.kpi,.story,.tabs{background:var(--panel);border:1px solid var(--edge);border-radius:14px;backdrop-filter:blur(12px);-webkit-backdrop-filter:blur(12px)}
+aside{align-self:start;position:sticky;top:12px;padding:16px;min-width:0}
+aside h2{font-size:1.15rem;margin-bottom:4px}
+label,legend{display:block;font-weight:600;font-size:.88rem;margin:14px 0 5px;padding:0}
+fieldset{border:0;margin:0;padding:0;min-width:0}
+select,input[type=month]{width:100%;min-height:44px;background:#0a1226;color:var(--txt);border:1px solid var(--edge);border-radius:10px;padding:8px 10px;font:inherit}
+.dates{display:grid;grid-template-columns:minmax(0,1fr);gap:8px}input[type=month]{min-width:0}.dates label{margin:0 0 3px;font-weight:500;color:var(--ash)}
+.err{color:#ff8a80;font-size:.85rem;min-height:1.2em;margin-top:6px}
+.hint{color:var(--ash);font-size:.8rem;margin:5px 0 0}
+.seg{position:relative;display:grid;grid-template-columns:1fr 1fr;border:1px solid var(--edge);border-radius:10px;overflow:hidden}
+.seg input{position:absolute;opacity:0;pointer-events:none}
+.seg label{margin:0;min-height:44px;display:flex;align-items:center;justify-content:center;text-align:center;cursor:pointer;font-size:.86rem;padding:4px 6px}
+.seg input:checked+label{background:var(--ember);color:#1a0d00}
+.seg input:focus-visible+label{outline:3px solid var(--cy);outline-offset:-3px}
+.seg input:disabled+label{opacity:.4;cursor:not-allowed}
+.tg{display:flex;gap:10px;align-items:center;font-weight:500;min-height:44px;margin:8px 0 0}.tg input{width:20px;height:20px;accent-color:var(--ember)}
+button{font:inherit;cursor:pointer}
+.btn{width:100%;min-height:44px;margin-top:8px;background:rgba(255,122,26,.14);color:#fff;border:1px solid var(--ember);border-radius:10px;font-weight:600}
+.btn[disabled]{opacity:.4;cursor:not-allowed;border-color:var(--edge)}
+.ftoggle{display:none;min-height:44px;background:var(--panel);color:#fff;border:1px solid var(--edge);border-radius:10px;font-weight:600}
+:focus-visible{outline:3px solid var(--cy);outline-offset:2px}
+main{min-width:0}
+.kpis{display:grid;grid-template-columns:repeat(4,minmax(0,1fr));gap:10px;margin-bottom:12px}
+.kpi{padding:12px 14px}.kpi.flag{border-color:var(--flame);box-shadow:inset 0 0 0 1px var(--flame)}
+.kpi .v{font:800 1.75rem/1.1 'Bricolage Grotesque',sans-serif;overflow-wrap:anywhere}.kpi .l{color:var(--ash);font-size:.82rem;margin-top:3px}
+.story{padding:14px 16px;font-size:1.08rem;margin-bottom:12px}.story b{color:var(--ember)}
+.tabs{display:grid;grid-template-columns:repeat(4,minmax(0,1fr));padding:4px;gap:4px;margin-bottom:12px}
+.tabs button{min-height:46px;background:none;border:0;border-radius:10px;color:var(--ash);font-weight:600;padding:6px 8px}
+.tabs button[aria-selected=true]{background:rgba(255,122,26,.18);color:#fff;box-shadow:inset 0 -3px 0 var(--ember)}
+section[role=tabpanel]{min-width:0}
+section[role=tabpanel]:not([hidden]){animation:fin .35s ease}@keyframes fin{from{opacity:0}}
+.card{padding:14px 16px;margin-bottom:12px;min-width:0}
+.card h2{font-size:1.25rem;margin-bottom:4px}.cap{color:var(--ash);font-size:.9rem;margin:2px 0 10px;max-width:80ch}
+.chart{width:100%;min-width:0}.chart[hidden],.empty[hidden]{display:none}
+.empty{border:1px dashed var(--edge);border-radius:10px;padding:28px 16px;text-align:center;color:var(--ash)}
+.spin{display:inline-block;width:16px;height:16px;border:3px solid var(--edge);border-top-color:var(--ember);border-radius:50%;animation:sp 1s linear infinite;vertical-align:-3px;margin-right:8px}@keyframes sp{to{transform:rotate(360deg)}}
+.tw{overflow-x:auto;max-width:100%}
+table{width:100%;border-collapse:collapse;font-size:.9rem}th,td{border-bottom:1px solid var(--edge);padding:7px 8px;text-align:left}
+.meth ol,.meth ul{padding-left:1.2em;margin:6px 0}.meth li{margin:5px 0}
+.warn{border:1px solid var(--flame);background:rgba(70,20,20,.4);border-radius:10px;padding:10px 12px;margin:10px 0}
+.badge{display:inline-block;border:1px solid var(--yl);color:var(--yl);border-radius:999px;padding:0 9px;font-size:.76rem;font-weight:600}
+.eyebrow{color:#ffb679;font-size:.68rem;font-weight:700;letter-spacing:.20em;margin-bottom:2px}
+.mission-line{display:flex;align-items:center;gap:10px;color:var(--ash);font-size:.75rem;letter-spacing:.02em;padding:0 2px 12px}
+.mission-rule{height:1px;flex:1;background:linear-gradient(90deg,var(--edge),transparent)}
+.pulse-dot{width:7px;height:7px;flex:none;border-radius:50%;background:#ff9d50;box-shadow:0 0 0 3px rgba(255,122,26,.15)}
+.card,.kpi,.tabs{box-shadow:0 6px 24px rgba(0,0,0,.10)}
+.kpi{position:relative;overflow:hidden;transition:border-color .18s ease,transform .18s ease}
+.kpi:before{content:"";position:absolute;width:46px;height:2px;left:14px;top:0;background:linear-gradient(90deg,var(--ember),transparent)}
+.kpi:hover{border-color:#405c79;transform:translateY(-1px)}
+.btn:hover:not(:disabled){background:rgba(255,122,26,.23)}
+.tabs button:hover:not([aria-selected=true]){color:#fff;background:rgba(255,255,255,.04)}
+footer{color:var(--ash);font-size:.78rem;border-top:1px solid var(--edge);padding-top:12px}
+@media(max-width:900px){.dates{grid-template-columns:repeat(2,minmax(0,1fr))}.wrap{grid-template-columns:minmax(0,1fr);padding:12px;gap:12px}aside{display:none;position:static}aside.open{display:block}.ftoggle{display:block}h1{font-size:1.8rem}.logo{font-size:1.8rem}}
+@media(max-width:640px){.mission-line{flex-wrap:wrap}.mission-rule{min-width:20px}.tabs{grid-template-columns:repeat(2,minmax(0,1fr))}.kpis{grid-template-columns:repeat(2,minmax(0,1fr))}.kpi .v{font-size:1.4rem}.tabs button{font-size:.8rem;padding:6px 2px}.story{font-size:1rem}}
+@media(prefers-reduced-motion:reduce){*{animation:none!important;transition:none!important}}
+</style></head><body>
+<canvas id="bg" aria-hidden="true"></canvas>
+<a class="skip" href="#main">Skip to dashboard</a>
+<div class="wrap">
+<header class="head">
+ <div class="brand"><span class="logo" aria-hidden="true">🔥</span><div><div class="eyebrow">NASA SPACE APPS · EARTH OBSERVATION</div><h1>FIREWATCH</h1><p>A clearer calendar of active-fire detections, harmonized across MODIS and VIIRS.</p></div></div>
+ <div class="chips" id="chips" aria-live="polite"></div>
+</header>
+<div class="banner" id="banner" hidden role="status"></div>
+<button class="ftoggle" id="ftoggle" aria-expanded="false" aria-controls="filters">☰ Filters</button>
+<aside id="filters" aria-label="Filters">
+ <h2>Filters</h2><div class="hint">These filters apply to the four charts below.</div>
+ <label for="region">Area</label><select id="region"></select>
+ <fieldset><legend>Dates</legend><div class="dates"><div><label for="d0">From</label><input type="month" id="d0" min="2003-01"></div><div><label for="d1">To</label><input type="month" id="d1"></div></div></fieldset>
+ <div class="err" id="derr" role="alert"></div>
+ <fieldset><legend>Record</legend><div class="seg" role="radiogroup" aria-label="Record"><input type="radio" name="rec" id="rh" value="h" checked><label for="rh">Harmonized</label><input type="radio" name="rec" id="rr" value="r"><label for="rr">Raw</label></div></fieldset>
+ <fieldset><legend>Unit</legend><div class="seg" role="radiogroup" aria-label="Unit"><input type="radio" name="un" id="uc" value="c" checked><label for="uc">Hotspots</label><input type="radio" name="un" id="ud" value="d"><label for="ud">Cell-days</label></div></fieldset>
+ <div class="hint" id="unhint">Harmonized puts both satellites on one scale. Raw shows the false 2012 jump.</div>
+ <label class="tg"><input type="checkbox" id="bgt"> Background animation</label>
+ <h2 style="font-size:1rem;margin-top:14px">Export (CSV)</h2>
+ <button class="btn" id="ex-cal">Calendar (month × year)</button><button class="btn" id="ex-ser">Monthly series</button>
+ <div class="hint" id="exnote"></div>
+</aside>
+<main id="main" tabindex="-1">
+ <div class="mission-line"><span class="pulse-dot" aria-hidden="true"></span><span>FIRMS research dashboard</span><span class="mission-rule"></span><span id="mission-state">Historical analysis · no fire forecasts</span></div>
+ <button class="btn" id="full" hidden style="width:auto;padding:0 16px;margin:0 0 12px">Show full record</button>
+ <div class="kpis" id="kpis" aria-label="Key figures"></div>
+ <p class="story" id="story" aria-live="polite"></p>
+ <div class="tabs" role="tablist" aria-label="Dashboard sections">
+  <button role="tab" id="t-cal" aria-controls="p-cal" aria-selected="true">📅 Calendar</button>
+  <button role="tab" id="t-tr" aria-controls="p-tr" aria-selected="false" tabindex="-1">📈 Trends</button>
+  <button role="tab" id="t-med" aria-controls="p-med" aria-selected="false" tabindex="-1">⚖️ vs Median</button>
+  <button role="tab" id="t-meth" aria-controls="p-meth" aria-selected="false" tabindex="-1">🔬 Methods</button>
+ </div>
+ <section role="tabpanel" id="p-cal" aria-labelledby="t-cal"><div class="card"><h2>Burning activity calendar</h2>
+  <p class="cap">Each square is one month. Darker means more activity. <b>Blank = unavailable; a zero means no recorded hotspot detections in a covered period.</b> A white outline marks an unusual month: above the 90th percentile of that calendar month in 2003–2025, harmonized data only, with at least 10 comparison years. A dotted yellow outline marks provisional (NRT) months.</p>
+  <div class="chart" id="cal" role="img" aria-labelledby="calsum"></div><div class="empty" id="cal-e" hidden></div><p class="sr" id="calsum"></p></div></section>
+ <section role="tabpanel" id="p-tr" aria-labelledby="t-tr" hidden><div class="card"><h2>Trends by satellite</h2>
+  <p class="cap">Raw MODIS, raw VIIRS and the harmonized record. Gaps mean unavailable data; zero means no detected hotspots during the covered period. The shaded band is where both satellites observed.</p>
+  <div class="chart" id="tr" role="img" aria-labelledby="trsum"></div><div class="empty" id="tr-e" hidden></div><p class="hint" id="trnote"></p><p class="sr" id="trsum"></p></div></section>
+ <section role="tabpanel" id="p-med" aria-labelledby="t-med" hidden><div class="card"><h2>A year against the historical median</h2>
+  <label for="yr" style="margin-top:0">Year</label><select id="yr" style="max-width:200px"></select>
+  <p class="cap" id="medcap"></p>
+  <div class="chart" id="md" role="img" aria-labelledby="medsum"></div><div class="empty" id="md-e" hidden></div><p class="sr" id="medsum"></p>
+  <div class="tw" id="medtbl"></div></div></section>
+ <section role="tabpanel" id="p-meth" aria-labelledby="t-meth" hidden><div class="card meth"><h2>Methods</h2>
+  <h3 style="margin-top:12px">How MODIS and VIIRS are harmonized</h3>
+  <ol><li><b>Clean:</b> keep vegetation fires (type 0), drop low-confidence hotspots. Core calendar uses MODIS Aqua, VIIRS S-NPP and VIIRS NOAA-20.</li>
+  <li><b>Grid:</b> assign each hotspot to a 0.1° cell (about 11 km). Any area is a set of cells.</li>
+  <li><b>Match scales:</b> for each calendar month, compare VIIRS to MODIS over 2012–2018, when both flew. That monthly ratio scales earlier MODIS to the VIIRS level.</li>
+  <li><b>Validate:</b> test on 2019–2025, years not used to fit, against a baseline that applies no scaling.</li></ol>
+  <h3>How “unusual” is decided</h3>
+  <ul><li>Each month is ranked against the same calendar month in <b>2003–2025</b> (complete archive years), using harmonized values, always. The date filter you choose never changes this baseline.</li>
+  <li>The year being checked is left out of its own baseline.</li>
+  <li>At least <b>10</b> comparison years are needed. Otherwise the app says “Insufficient historical data” and flags nothing.</li>
+  <li>Unusual means above the 90th percentile. One high month does not make a trend.</li>
+  <li>Raw data is never used for percentiles, because it contains the 2012 sensor jump.</li></ul>
+  <h3>Archive vs provisional</h3><p class="cap" style="max-width:none"><span id="provm">Provisional dates are shown only when verified NRT source records are available.</span> NRT observations can be revised when archived data arrives.</p>
+  <h3>Validation (2019–2025)</h3><div id="valbox"></div>
+  <div class="warn">Hotspot counts are not burned area. They show where satellites detected active fire, not how much land burned.</div></div></section>
+</main>
+<footer>We acknowledge the use of data and/or imagery from NASA's Fire Information for Resource Management System (FIRMS) (https://earthdata.nasa.gov/firms), part of NASA's Land, Atmosphere Near real-time Capability for Earth observations (LANCE) (https://earthdata.nasa.gov/lance) and NASA's Earth Science Data and Information System (ESDIS).</footer>
+</div>
+<script>
+/* ===== Data layer =====
+ Real mode: Streamlit injects window.FIREWATCH_DATA before this script runs:
+  {regions:[{id,name}], monthly:{id:[{year,month,raw_modis,raw_viirs,harmonized_count,harmonized_celldays}]},
+   validation:{mae,mape,r,naive_mae,naive_mape,test_years}|null, provisional_from:"YYYY-MM"}
+ null = no observation (kept as null), 0 = observed zero (kept as 0). Missing months are never filled.
+ Without window.FIREWATCH_DATA the page runs in DEMO mode: synthetic numbers, clearly labelled, exports disabled. */
+const FD=window.FIREWATCH_DATA||null;
+const REF0=2003,REF1=2025,MIN_N=10;
+const PROV=(FD&&/^\d{4}-\d{2}$/.test(FD.provisional_from||""))?FD.provisional_from:null;
+const $=id=>document.getElementById(id),M=["Jan","Feb","Mar","Apr","May","Jun","Jul","Aug","Sep","Oct","Nov","Dec"],pad=n=>String(n).padStart(2,"0");
+const ord=x=>{const n=Math.round(x),t=n%100,u=n%10;return n+(t>=11&&t<=13?"th":u==1?"st":u==2?"nd":u==3?"rd":"th")};
+const f0=x=>x==null?"—":Math.round(x).toLocaleString("en-US"),mob=()=>innerWidth<700,rmo=matchMedia("(prefers-reduced-motion: reduce)").matches;
+const ST={mode:"loading",region:null,regions:[],rows:[],S:[],D:[],d0:"",d1:"",harmPref:true,cd:false,tab:"cal",year:null,val:null};
+const harmMode=()=>$("rh").checked||ST.cd,un=()=>ST.cd?"active cell-days":"hotspots";
+function rnd(s){return()=>{s|=0;s=s+0x6D2B79F5|0;let t=Math.imul(s^s>>>15,1|s);t=t+Math.imul(t^t>>>7,61|t)^t;return((t^t>>>14)>>>0)/4294967296}}
+function demoRows(){const r=rnd(42),o=[];for(let y=2003;y<=2026;y++)for(let m=1;m<=12;m++){if(y==2026&&m>10)break;
+ const s=1.2*Math.exp(-(((m-10.5)/1)**2))+.8*Math.exp(-(((m-4.5)/.8)**2))+.12,k=180*s,n=()=>Math.exp((r()+r()+r()-1.5)*.35),mo=y<=2025?k*n():null,vi=y>=2012?k*2.6*n():null,h=y>=2012?vi:mo*2.6;
+ o.push({year:y,month:m,raw_modis:mo,raw_viirs:vi,harmonized_count:h,harmonized_celldays:h*.35})}return o}
+function build(){const by={};let mn=1e9,mx=0;ST.rows.forEach(r=>{const k=r.year*100+r.month;by[k]=r;mn=Math.min(mn,k);mx=Math.max(mx,k)});
+ const nu=v=>(v==null||Number.isNaN(+v))?null:+v,S=[];
+ for(let y=Math.floor(mn/100);y<=Math.floor(mx/100);y++)for(let m=1;m<=12;m++){const k=y*100+m;if(k<mn||k>mx)continue;const r=by[k],ks=y+"-"+pad(m);
+  S.push({y,m,k:ks,modis:r?nu(r.raw_modis):null,viirs:r?nu(r.raw_viirs):null,hc:r?nu(r.harmonized_count):null,hcd:r?nu(r.harmonized_celldays):null,prov:!!PROV&&ks>=PROV})}
+ ST.S=S}
+/* ===== Statistics: baseline is fixed (REF0-REF1, same calendar month, own year left out) and independent of the date filter ===== */
+const qt=(a,p)=>{const i=(a.length-1)*p,l=Math.floor(i);return a[l]+(a[Math.min(l+1,a.length-1)]-a[l])*(i-l)};
+function stat(D,d){if(d.h==null)return null;const ref=D.filter(e=>e.m==d.m&&e.y!=d.y&&e.y>=REF0&&e.y<=REF1&&e.h!=null).map(e=>e.h).sort((a,b)=>a-b);
+ if(ref.length<MIN_N)return{ok:false,n:ref.length};const lt=ref.filter(x=>x<d.h).length,eq=ref.filter(x=>x==d.h).length;
+ return{ok:true,n:ref.length,med:qt(ref,.5),q25:qt(ref,.25),q75:qt(ref,.75),pct:100*(lt+.5*eq)/ref.length}}
+function derive(){ST.D=ST.S.map(d=>{const h=ST.cd?d.hcd:d.hc,raw=d.viirs!=null?d.viirs:d.modis;return{...d,h,raw,v:harmMode()?h:raw}});ST.D.forEach(d=>d.st=stat(ST.D,d))}
+const view=()=>ST.D.filter(d=>d.k>=ST.d0&&d.k<=ST.d1);
+/* ===== UI helpers ===== */
+const CFGP={displaylogo:false,responsive:true,toImageButtonOptions:{format:"png",scale:2}};
+function LY(title,h,x){const o=Object.assign({title:{text:title,x:.01,xanchor:"left",font:{size:mob()?13:15,color:"#fff"}},paper_bgcolor:"rgba(0,0,0,0)",plot_bgcolor:"rgba(8,14,30,.4)",font:{color:"#E6ECF8",size:mob()?11:13},height:h,margin:{l:mob()?44:58,r:mob()?8:14,t:mob()?50:56,b:42},dragmode:false},x||{});
+ const a=(x&&x.annotations)||[];o.annotations=ST.mode=="demo"?a.concat([{text:"DEMO DATA",xref:"paper",yref:"paper",x:.5,y:.5,showarrow:false,textangle:-18,font:{size:mob()?38:64,color:"rgba(255,255,255,.07)"}}]):a;return o}
+function empty(id,msg){try{Plotly.purge(id)}catch(e){}$(id).hidden=true;const e=$(id+"-e");e.hidden=false;e.innerHTML=msg}
+function ok(id){$(id+"-e").hidden=true;$(id).hidden=false}
+const loading=()=>["cal","tr","md"].forEach(i=>empty(i,'<span class="spin"></span>Loading data…'));
+function chips(){const nm=(ST.regions.find(r=>r.id==ST.region)||{}).name||"",c=$("chips");c.textContent="";
+ const add=(t,k)=>{const e=document.createElement("span");e.className="chip"+(k?" "+k:"");e.textContent=t;c.append(e)};
+ add("📍 "+nm);add("🗓 "+ST.d0+" to "+ST.d1);add((harmMode()?"Harmonized":"Raw")+" · "+un());
+ if(ST.mode=="demo")add("DEMO DATA","demo");else if(ST.mode=="real")add("NASA FIRMS · data through "+(ST.S.length?ST.S[ST.S.length-1].k:""),"real")}
+const rect=(m,y,c,w,d)=>({type:"rect",xref:"x",yref:"y",x0:m-.5,x1:m+.5,y0:y-.5,y1:y+.5,line:{color:c,width:w,dash:d||"solid"}});
+/* ===== KPIs + story ===== */
+function kpis(V){const L=[...V].reverse().find(d=>d.v!=null),n=V.filter(d=>d.st&&d.st.ok&&d.st.pct>90).length,card=(v,l,f)=>`<div class="kpi${f?" flag":""}"><div class="v">${v}</div><div class="l">${l}</div></div>`;
+ if(!L){$("kpis").innerHTML=card("—","Latest month")+card("—","vs median")+card("—","percentile")+card("—","unusual months");$("story").textContent="No observations in this area and date range.";return}
+ const s=L.st,good=s&&s.ok,hi=good&&s.pct>90,mn=`${M[L.m-1]} ${L.y}`+(L.prov?" (provisional)":"");
+ $("kpis").innerHTML=card(f0(L.v),`${mn} · ${un()}, ${harmMode()?"harmonized (S-NPP-equivalent)":"raw"}`)+card(good&&s.med>0?(L.h/s.med).toFixed(1)+"×":"n/a","vs median of that month (harmonized)")+card(good?ord(s.pct):"n/a",`percentile vs ${REF0}–${REF1}`,hi)+card(harmMode()?n:"—","unusual months in view (above 90th)");
+ $("story").innerHTML=good?`<b>${mn}</b> had <b>${f0(L.h)}</b> ${un()} (harmonized)${s.med>0?`, <b>${(L.h/s.med).toFixed(1)}×</b> the median for ${M[L.m-1]}`:""}, at the <b>${ord(s.pct)} percentile</b> of ${s.n} comparison years.${hi?" This is an <b>unusual month</b>.":""}`:
+  s?`<b>${mn}</b>: Insufficient historical data (${s.n} comparison years, ${MIN_N} needed) for a reliable comparison.`:`<b>${mn}</b>: no harmonized value for this month.`}
+/* ===== Tabs ===== */
+function drawCal(V){const ys=[...new Set(V.filter(d=>d.v!=null).map(d=>d.y))];if(!ys.length)return empty("cal","No observations in this area and date range. Widen the dates or choose another area.");ok("cal");
+ const y0=Math.min(...ys),y1=Math.max(...ys),Y=[];for(let y=y0;y<=y1;y++)Y.push(y);const z=Y.map(()=>Array(12).fill(null)),tx=Y.map((_,i)=>M.map((m,j)=>`${m} ${Y[i]}<br>No observation (not zero)`)),sh=[];let top=null;
+ V.forEach(d=>{const i=d.y-y0,j=d.m-1;if(d.v==null)return;z[i][j]=d.v;if(!top||d.v>top.v)top=d;const s=d.st,p=!s?"n/a":s.ok?ord(s.pct)+" (harmonized, "+s.n+" years)":"Insufficient historical data ("+s.n+" years)";
+  tx[i][j]=`${M[j]} ${d.y}${d.prov?" · provisional (NRT)":""}<br>${harmMode()?"Harmonized":"Raw"}: ${f0(d.v)} ${un()}<br>Raw MODIS: ${f0(d.modis)} hotspots<br>Raw VIIRS: ${f0(d.viirs)} hotspots<br>Percentile: ${p}`;
+  if(d.prov)sh.push(rect(d.m,d.y,"#FFD60A",1.6,"dot"));if(harmMode()&&s&&s.ok&&s.pct>90)sh.push(rect(d.m,d.y,"#fff",2.6))});
+ Plotly.react("cal",[{type:"heatmap",z,x:[1,2,3,4,5,6,7,8,9,10,11,12],y:Y,text:tx,hoverinfo:"text",hoverongaps:true,colorscale:"YlOrRd",zmin:0,xgap:2,ygap:2,colorbar:{title:{text:un(),side:"right"},thickness:12,len:.9}}],
+  LY(`Monthly ${un()} (${harmMode()?"harmonized":"raw"})`,Math.max(320,Y.length*(mob()?18:22)+170),{margin:{l:mob()?44:58,r:mob()?8:14,t:mob()?110:84,b:42},shapes:sh,xaxis:{tickvals:[1,2,3,4,5,6,7,8,9,10,11,12],ticktext:M,side:"top",range:[.5,12.5],fixedrange:true},yaxis:{autorange:"reversed",dtick:Y.length>16?2:1,fixedrange:true}}),CFGP);
+ $("calsum").textContent=`Heatmap of monthly ${un()} for ${Y.length} years. ${top?`Highest month: ${M[top.m-1]} ${top.y} with ${f0(top.v)}.`:""} ${V.filter(d=>d.st&&d.st.ok&&d.st.pct>90).length} months are above the 90th percentile.`}
+function drawTr(V){if(!V.some(d=>d.h!=null||d.modis!=null||d.viirs!=null))return empty("tr","No observations in this area and date range.");ok("tr");
+ const x=V.map(d=>d.k+"-01"),T=[],ln=(y,n,c,w)=>({type:"scatter",mode:"lines",x,y,name:n,connectgaps:false,line:{color:c,width:w},hovertemplate:n+": %{y:,.0f}<extra>%{x|%b %Y}</extra>"});
+ if(!ST.cd){T.push(ln(V.map(d=>d.modis),"Raw MODIS","#5AC8FA",1.8),ln(V.map(d=>d.viirs),"Raw VIIRS","#FFD60A",1.8))}T.push(ln(V.map(d=>d.h),"Harmonized","#FF7A1A",3.2));
+ const nx=k=>{const[y,m]=k.split("-").map(Number);return m==12?(y+1)+"-01-01":y+"-"+pad(m+1)+"-01"},sh=[],an=[],both=V.filter(d=>d.modis!=null&&d.viirs!=null),pv=V.filter(d=>d.prov);
+ if(!ST.cd&&both.length){sh.push({type:"rect",xref:"x",yref:"paper",x0:both[0].k+"-01",x1:nx(both[both.length-1].k),y0:0,y1:1,fillcolor:"rgba(255,255,255,.05)",line:{width:0},layer:"below"});an.push({x:both[0].k+"-01",xref:"x",yref:"paper",y:.99,yanchor:"top",xanchor:"left",showarrow:false,text:"MODIS + VIIRS overlap",font:{size:11,color:"#B4C0DA"}})}
+ const fv=V.find(d=>d.viirs!=null);if(!ST.cd&&fv&&V[0].viirs==null){sh.push({type:"line",xref:"x",yref:"paper",x0:fv.k+"-01",x1:fv.k+"-01",y0:0,y1:1,line:{color:"#B4C0DA",dash:"dot"}});an.push({x:fv.k+"-01",xref:"x",yref:"paper",y:.88,yanchor:"top",xanchor:"right",showarrow:false,text:"VIIRS begins ",font:{size:11,color:"#B4C0DA"}})}
+ if(pv.length)sh.push({type:"rect",xref:"x",yref:"paper",x0:pv[0].k+"-01",x1:nx(pv[pv.length-1].k),y0:0,y1:1,fillcolor:"rgba(255,214,10,.14)",line:{width:0},layer:"below"});
+ Plotly.react("tr",T,LY(`Monthly ${un()}: raw vs harmonized`,mob()?400:460,{shapes:sh,annotations:an,yaxis:{title:un(),rangemode:"tozero",gridcolor:"#24365C",fixedrange:true},xaxis:{gridcolor:"#24365C",rangeslider:{visible:!mob(),thickness:.06}},legend:{orientation:"h",y:-.28},dragmode:mob()?false:"zoom"}),CFGP);
+ $("trnote").textContent=ST.cd?"Raw cell-days are not in the data contract, so only the harmonized series is shown.":pv.length?"Yellow band: provisional (NRT) months.":"";
+ const l=[...V].reverse().find(d=>d.h!=null);$("trsum").textContent=`Line chart of monthly ${un()} from ${V[0].k} to ${V[V.length-1].k}. ${l?`Latest harmonized value ${f0(l.h)} in ${M[l.m-1]} ${l.y}.`:""}`}
+function drawMed(){const D=ST.D,ys=[...new Set(D.filter(d=>d.h!=null).map(d=>d.y))],sel=$("yr");
+ if(!ys.length)return empty("md","No harmonized observations for this area.");ok("md");
+ if(sel.options.length!=ys.length||sel.dataset.r!=ST.region){sel.textContent="";[...ys].reverse().forEach(y=>sel.add(new Option(y,y)));sel.dataset.r=ST.region;ST.year=null}
+ if(!ST.year||!ys.includes(ST.year))ST.year=ys[ys.length-1];sel.value=ST.year;const Y=ST.year,R=M.map((_,i)=>D.find(d=>d.y==Y&&d.m==i+1)||null);
+ const g=f=>R.map(r=>r&&r.st&&r.st.ok?f(r.st):null);
+ $("medcap").textContent=`The orange line is ${Y}. The band is the middle half of ${REF0}–${REF1} (25th–75th percentile) for each month, with ${Y} left out, and shows only where at least ${MIN_N} years exist. Uses harmonized values and ignores the date filter. Diamonds are provisional months.`;
+ Plotly.react("md",[{x:M,y:g(s=>s.q75),type:"scatter",mode:"lines",line:{width:0},showlegend:false,hoverinfo:"skip",connectgaps:false},
+  {x:M,y:g(s=>s.q25),type:"scatter",mode:"lines",line:{width:0},fill:"tonexty",fillcolor:"rgba(90,200,250,.25)",name:"25th–75th percentile",hoverinfo:"skip",connectgaps:false},
+  {x:M,y:g(s=>s.med),type:"scatter",mode:"lines",name:"Median",line:{color:"#fff",dash:"dash",width:2},connectgaps:false},
+  {x:M,y:R.map(r=>r?r.h:null),type:"scatter",mode:"lines+markers",name:String(Y),line:{color:"#FF7A1A",width:4},marker:{size:9,symbol:R.map(r=>r&&r.prov?"diamond-open":"circle")},connectgaps:false}],
+  LY(`${Y} vs historical median (${un()}, harmonized)`,mob()?340:400,{yaxis:{title:un(),rangemode:"tozero",gridcolor:"#24365C",fixedrange:true},xaxis:{fixedrange:true},legend:{orientation:"h",y:-.22}}),CFGP);
+ $("medsum").textContent=`Line chart comparing ${Y} with the historical median by month. ${R.filter(r=>r&&r.st&&r.st.ok&&r.h>r.st.q75).length} months are above the 75th percentile.`;
+ $("medtbl").innerHTML=`<table><tr><th>Month</th><th>${un()}</th><th>Median</th><th>× median</th><th>Percentile</th></tr>`+R.map((r,i)=>{if(!r||r.h==null)return`<tr><td>${M[i]}</td><td colspan="4">No observation</td></tr>`;const s=r.st;
+  return`<tr><td>${M[i]}${r.prov?' <span class="badge">NRT</span>':""}</td><td>${f0(r.h)}</td>`+(s.ok?`<td>${f0(s.med)}</td><td>${s.med>0?(r.h/s.med).toFixed(1)+"×":"n/a"}</td><td>${ord(s.pct)}</td>`:`<td colspan="3">Insufficient historical data (${s.n} years)</td>`)+"</tr>"}).join("")+"</table>"}
+function drawMeth(){const v=ST.val,box=$("valbox"),n=x=>typeof x=="number"&&isFinite(x)?x.toFixed(2):"—";box.textContent="";
+ if(v&&ST.mode=="real"){const w=document.createElement("div");w.className="tw";const t=document.createElement("table");
+  [["Measure","Harmonized","No-scaling baseline"],["MAE",n(v.mae),n(v.naive_mae)],["MAPE",n(v.mape),n(v.naive_mape)],["Pearson r",n(v.r),"—"]].forEach((r,i)=>{const tr=t.insertRow();r.forEach(c=>{const e=document.createElement(i?"td":"th");e.textContent=c;tr.append(e)})});
+  w.append(t);const p=document.createElement("p");p.className="hint";p.textContent="Test years: "+(v.test_years==null?"—":Array.isArray(v.test_years)?v.test_years.join(", "):String(v.test_years));box.append(w,p)}
+ else{const p=document.createElement("p");p.className="cap";p.style.maxWidth="none";p.textContent="Validation pending: validation data is not connected"+(ST.mode=="demo"?" (demo mode)":"")+". No numbers are shown until it is.";box.append(p)}}
+const TABS=["cal","tr","med","meth"];
+function drawTab(){if(!ST.D.length)return;const V=view();if(ST.tab=="cal")drawCal(V);if(ST.tab=="tr")drawTr(V);if(ST.tab=="med")drawMed();if(ST.tab=="meth")drawMeth()}
+function show(t,focus){ST.tab=t;TABS.forEach(k=>{const s=k==t,b=$("t-"+k);b.setAttribute("aria-selected",s);b.tabIndex=s?0:-1;$("p-"+k).hidden=!s});if(focus)$("t-"+t).focus();try{history.replaceState(null,"","#"+t)}catch(e){/* blocked inside Streamlit's srcdoc iframe; the tab still works */}drawTab()}
+TABS.forEach((k,i)=>{$("t-"+k).onclick=()=>show(k);$("t-"+k).onkeydown=e=>{const j={ArrowRight:i+1,ArrowLeft:i-1,Home:0,End:3}[e.key];if(j!=null){e.preventDefault();show(TABS[(j+4)%4],true)}}});
+/* ===== Render, filters, exports ===== */
+function render(){if(!ST.S.length)return;derive();chips();const V=view();kpis(V);drawTab();
+ const demo=ST.mode!="real";["ex-cal","ex-ser"].forEach(i=>$(i).disabled=demo);$("exnote").textContent=demo?"Exports are off in demo mode so synthetic numbers are never saved as NASA data.":"Exports contain the data currently shown. Hotspot files are on the Downloads page.";
+ $("full").hidden=!(mob()&&ST.S.length&&ST.d0>ST.S[0].k)}
+function setDates(){if(!ST.S.length)return;const a=$("d0").value,b=$("d1").value,re=/^\d{4}-\d{2}$/,fl=ST.S[0].k,la=ST.S[ST.S.length-1].k;let e="";
+ if(!re.test(a)||!re.test(b))e="Enter both dates as YYYY-MM.";else if(a>b)e="The start date must not be after the end date.";else if(a<fl)e=`Data starts in ${fl}.`;else if(b>la)e=`Data ends in ${la}.`;
+ $("derr").textContent=e;$("d0").setAttribute("aria-invalid",!!e);$("d1").setAttribute("aria-invalid",!!e);if(e)return;ST.d0=a;ST.d1=b;render()}
+function setUnit(){ST.cd=$("ud").checked;const r=$("rr");if(ST.cd){ST.harmPref=$("rh").checked;$("rh").checked=true;r.disabled=true;$("unhint").textContent="Raw cell-days are not in the data contract, so cell-days are shown harmonized only."}else{r.disabled=false;$("rh").checked=ST.harmPref;$("rr").checked=!ST.harmPref;$("unhint").textContent="Harmonized puts both satellites on one scale. Raw shows the false 2012 jump."}render()}
+$("d0").onchange=setDates;$("d1").onchange=setDates;$("rh").onchange=$("rr").onchange=()=>{ST.harmPref=$("rh").checked;render()};$("uc").onchange=$("ud").onchange=setUnit;
+$("yr").onchange=()=>{ST.year=+$("yr").value;drawMed()};$("region").onchange=async()=>{ST.region=$("region").value;await load()};
+$("full").onclick=()=>{if(!ST.S.length)return;const fl=ST.S[0].k,la=ST.S[ST.S.length-1].k;ST.d0=fl;ST.d1=la;$("d0").value=fl;$("d1").value=la;$("derr").textContent="";render()};
+$("ftoggle").onclick=()=>{const o=$("filters").classList.toggle("open");$("ftoggle").setAttribute("aria-expanded",o)};
+const csv=R=>R.map(r=>r.map(v=>{v=v==null?"":String(v);return/[",\n]/.test(v)?'"'+v.replace(/"/g,'""')+'"':v}).join(",")).join("\n");
+function dl(n,R){const u=URL.createObjectURL(new Blob([csv(R)],{type:"text/csv"})),a=document.createElement("a");a.href=u;a.download=`firewatch_${n}_${ST.region}_${ST.d0}_${ST.d1}.csv`;document.body.append(a);a.click();a.remove();setTimeout(()=>URL.revokeObjectURL(u),1500)}
+const SRC="NASA FIRMS (MODIS Aqua C6.1; VIIRS S-NPP; VIIRS NOAA-20)";
+$("ex-ser").onclick=()=>{if(ST.mode!="real")return;dl("series",[["month","value","unit","record","raw_modis_hotspots","raw_viirs_hotspots","harmonized_percentile","unusual","provisional","region","source"]].concat(view().map(d=>[d.k,d.v,un(),harmMode()?"harmonized":"raw (VIIRS where available, else MODIS)",d.modis,d.viirs,d.st&&d.st.ok?d.st.pct.toFixed(1):"",harmMode()&&d.st&&d.st.ok&&d.st.pct>90,d.prov,ST.region,SRC])))};
+$("ex-cal").onclick=()=>{if(ST.mode!="real")return;const V=view(),ys=[...new Set(V.map(d=>d.y))];dl("calendar",[["year","unit","record","region","source"].concat(M)].concat(ys.map(y=>[y,un(),harmMode()?"harmonized":"raw",ST.region,SRC].concat(M.map((_,i)=>{const d=V.find(e=>e.y==y&&e.m==i+1);return d&&d.v!=null?d.v:""})))))};
+/* ===== Load ===== */
+function banner(kind,txt,strong,retry){const b=$("banner");b.hidden=!kind;b.className="banner "+(kind||"");b.textContent="";if(!kind)return;
+ const s=document.createElement("b");s.textContent=strong+" ";b.append(s,txt+" ");
+ if(retry){const r=document.createElement("button");r.className="btn";r.style.cssText="width:auto;margin:0;padding:0 14px";r.textContent="Retry";r.onclick=init;b.append(r)}}
+async function load(){$("main").setAttribute("aria-busy","true");loading();
+ try{ST.rows=FD?((FD.monthly||{})[ST.region]||[]):demoRows();build();if(!ST.S.length)throw new Error("No monthly rows were supplied for this area");
+  const fl=ST.S[0].k,la=ST.S[ST.S.length-1].k;
+  if(!ST.d0&&FD&&/^\d{4}-\d{2}$/.test(FD.initial_start||""))ST.d0=FD.initial_start;
+  if(!ST.d1&&FD&&/^\d{4}-\d{2}$/.test(FD.initial_end||""))ST.d1=FD.initial_end;
+  if(!ST.d0&&mob()){const n=(+la.slice(0,4))*12+(+la.slice(5))-1-59;ST.d0=Math.floor(n/12)+"-"+pad(n%12+1)}
+  if(!ST.d0||ST.d0<fl||ST.d0>la)ST.d0=fl;if(!ST.d1||ST.d1>la||ST.d1<fl)ST.d1=la;if(ST.d0>ST.d1){ST.d0=fl;ST.d1=la;}$("d0").min=$("d1").min=fl;$("d0").max=$("d1").max=la;$("d0").value=ST.d0;$("d1").value=ST.d1;
+  $("provm").textContent=PROV?"Verified NRT observations begin "+M[+PROV.slice(5)-1]+" "+PROV.slice(0,4)+".":"No provisional NRT source month is verified in the loaded dataset.";
+  if(ST.mode=="demo")banner("demo","The numbers on this page are synthetic and are not NASA observations. Exports are disabled.","Demo mode:");else banner("");
+  $("mission-state").textContent=ST.mode=="demo"?"DEMO · Synthetic numbers":"Archived FIRMS record"+(PROV?" + provisional NRT":"");
+  $("main").setAttribute("aria-busy","false");render()}
+ catch(e){ST.S=[];ST.D=[];ST.mode="error";$("main").setAttribute("aria-busy","false");$("kpis").innerHTML="";$("story").textContent="";chips();
+  banner("err",e.message+".","Data unavailable.",true);["cal","tr","md"].forEach(i=>empty(i,"Data unavailable. Nothing is shown rather than guessed."))}}
+async function init(){ST.mode="loading";banner("");
+ try{if(FD){ST.regions=FD.regions||[];if(!ST.regions.length)throw new Error("No regions were supplied");ST.val=FD.validation||null;ST.mode="real"}
+  else{ST.regions=[{id:"demo",name:"Punjab + Haryana (demo)"}];ST.mode="demo"}
+  const sel=$("region");sel.textContent="";ST.regions.forEach(r=>sel.add(new Option(r.name,r.id)));ST.region=ST.regions[0].id}
+ catch(e){ST.mode="error";banner("err",e.message+".","Data unavailable.",true);loading();["cal","tr","md"].forEach(i=>empty(i,"Data unavailable."));return}
+ await load()}
+/* ===== Background: cheap embers, 30 fps, paused when hidden, off by default on phones / reduced motion ===== */
+(function(){const c=$("bg"),x=c.getContext("2d"),t=$("bgt");let w,h,base,P=[],raf=0,last=0;
+ function paintBase(){w=c.width=innerWidth;h=c.height=innerHeight;base=document.createElement("canvas");base.width=w;base.height=h;const b=base.getContext("2d"),g=b.createLinearGradient(0,0,0,h);g.addColorStop(0,"#04070f");g.addColorStop(1,"#0c0d1f");b.fillStyle=g;b.fillRect(0,0,w,h);
+  [[.15,1.02,.5,"255,59,48"],[.55,1.1,.6,"255,122,26"],[.88,1.03,.45,"255,59,48"]].forEach(a=>{const r=a[2]*Math.max(w,h),q=b.createRadialGradient(a[0]*w,a[1]*h,0,a[0]*w,a[1]*h,r);q.addColorStop(0,"rgba("+a[3]+",.26)");q.addColorStop(1,"rgba("+a[3]+",0)");b.fillStyle=q;b.fillRect(0,0,w,h)});x.drawImage(base,0,0)}
+ const mk=i=>({x:Math.random()*w,y:i?Math.random()*h:h+8,r:Math.random()*1.8+.8,v:Math.random()*.4+.2,p:Math.random()*6,a:Math.random()*.5+.3});
+ function frame(ts){raf=requestAnimationFrame(frame);if(ts-last<33)return;last=ts;x.drawImage(base,0,0);x.fillStyle="#FF7A1A";P.forEach((p,i)=>{p.p+=.02;p.x+=Math.sin(p.p)*.3;p.y-=p.v;if(p.y<-8)P[i]=mk(false);x.globalAlpha=p.a*Math.max(0,p.y/h);x.beginPath();x.arc(p.x,p.y,p.r,0,6.283);x.fill()});x.globalAlpha=1}
+ function set(on){cancelAnimationFrame(raf);paintBase();if(on&&!rmo&&!document.hidden){P=Array.from({length:mob()?16:34},()=>mk(true));raf=requestAnimationFrame(frame)}}
+ t.checked=!rmo&&!mob();if(rmo){t.disabled=true}t.onchange=()=>set(t.checked);addEventListener("resize",()=>{clearTimeout(c.rt);c.rt=setTimeout(()=>set(t.checked),200)});document.addEventListener("visibilitychange",()=>set(t.checked));set(t.checked)})();
+const h0=location.hash.slice(1);if(TABS.includes(h0)){ST.tab=h0;TABS.forEach(k=>{const s=k==h0;$("t-"+k).setAttribute("aria-selected",s);$("t-"+k).tabIndex=s?0:-1;$("p-"+k).hidden=!s})}
+init();
+</script></body></html>
