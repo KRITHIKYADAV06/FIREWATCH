@@ -4,7 +4,7 @@
 
 NASA Space Apps Challenge 2026 · Challenge: *Harmonization of MODIS and VIIRS Hot Spots*
 
-🌐 **Live app:** [LIVE_URL] · 💻 **Code:** https://github.com/KRITHIKYADAV06/FIREWATCH
+🌐 **Live app:** https://firewatch-india.streamlit.app · 💻 **Code:** https://github.com/KRITHIKYADAV06/FIREWATCH
 
 ---
 
