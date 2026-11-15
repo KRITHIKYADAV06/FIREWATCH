@@ -315,9 +315,13 @@ def _sidebar(first: str, last: str, choices: list[str]):
         st.caption("NASA Space Apps Challenge · MODIS/VIIRS harmonization")
         st.caption("**Selected area**")
         st.caption(aoi_label(st.session_state["aoi"]))
+        # A fixed key and a CONSTANT default range (last 60 months) keep the widget
+        # stable between runs, so a new period is applied on the first change.
+        # (The old code passed the current period as value=, which changed every
+        # run and made Streamlit rebuild the slider and drop the user's choice.)
         start, end = st.select_slider(
-            "Shared analysis period", options=choices,
-            value=(st.session_state["start_month"], st.session_state["end_month"]),
+            "Shared analysis period", options=choices, key="period",
+            value=(choices[max(0, len(choices) - 60)], last),
             help="Controls the map preview, download period and initial dashboard view.",
         )
         st.session_state["start_month"], st.session_state["end_month"] = start, end

@@ -496,6 +496,17 @@ def chronic_layer(map_obj, chronic_df):
     return map_obj
 
 
+def _aoi_key(value):
+    """Canonical form of an AOI for comparing: lists/tuples -> tuples, numbers -> rounded floats."""
+    if isinstance(value, dict):
+        return tuple(sorted((k, _aoi_key(v)) for k, v in value.items()))
+    if isinstance(value, (list, tuple)):
+        return tuple(_aoi_key(v) for v in value)
+    if isinstance(value, (int, float)) and not isinstance(value, bool):
+        return round(float(value), 6)
+    return value
+
+
 def area_map(hotspots_df=None):
     """Display the AOI selector and hotspot overlays."""
     old_aoi = _select_aoi()
@@ -555,7 +566,7 @@ def area_map(hotspots_df=None):
         try:
             new_aoi = _convert_drawing_to_aoi(drawings[-1])
 
-            if new_aoi != st.session_state["aoi"]:
+            if _aoi_key(new_aoi) != _aoi_key(st.session_state["aoi"]):
                 st.session_state["aoi"] = new_aoi
                 st.session_state.pop("hotspot_data", None)
                 st.rerun()
@@ -569,6 +580,13 @@ def area_map(hotspots_df=None):
     # on the next run instead.
     if old_aoi != st.session_state["aoi"]:
         st.session_state.pop("hotspot_data", None)
+
+    # Rerun once for EVERY mode (Box, Point, Draw) when the area really
+    # changed, so the sidebar label and other pages use the new area.
+    # Compare a canonical form (tuples vs lists, 50 vs 50.0 count as equal)
+    # so this can never loop.
+    if _aoi_key(old_aoi) != _aoi_key(st.session_state["aoi"]):
+        st.rerun()
 
     aoi = st.session_state["aoi"]
 
