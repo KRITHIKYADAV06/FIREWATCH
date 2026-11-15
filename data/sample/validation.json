@@ -1,0 +1,41 @@
+{
+  "mae": 4288.1646,
+  "mape": 15.9266,
+  "r": 0.9801,
+  "naive_mae": 31107.1548,
+  "naive_mape": 88.1404,
+  "naive_r": 0.9397,
+  "pooled_mae": 8757.5951,
+  "pooled_mape": 28.1905,
+  "pooled_r": 0.9397,
+  "n": 84,
+  "n_mape": 84,
+  "cell_mae": 6.2776,
+  "cell_mape": 132.288,
+  "cell_r": 0.7585,
+  "cell_naive_mae": 5.9124,
+  "cell_naive_mape": 92.8203,
+  "cell_naive_r": 0.7692,
+  "cell_pooled_mae": 6.2478,
+  "cell_pooled_mape": 127.1022,
+  "cell_pooled_r": 0.7692,
+  "cell_n": 449315,
+  "cell_n_mape": 436631,
+  "test_years": [
+    2019,
+    2020,
+    2021,
+    2022,
+    2023,
+    2024,
+    2025
+  ],
+  "fit_years": [
+    "2012-2018"
+  ],
+  "pooled_ratio": 7.837,
+  "level": "top-level mae/mape/r = India-wide monthly totals (n test months); cell_* = 0.1 deg cell-months where truth or raw_modis > 0",
+  "truth": "harmonized_count (S-NPP VIIRS as observed for 2019-2025)",
+  "prediction": "raw_modis x monthly ratio_count (fit 2012-2018)",
+  "mape_note": "MAPE in percent, computed only where truth > 0 (n_mape rows)"
+}

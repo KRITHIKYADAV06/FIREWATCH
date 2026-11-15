@@ -1,0 +1,51 @@
+{
+  "label": "experimental",
+  "target": "next-month harmonized_count per 0.1 deg cell (VIIRS S-NPP scale)",
+  "model": "HistGradientBoostingRegressor(loss='poisson', max_iter=300, learning_rate=0.05)",
+  "features": [
+    "lag1",
+    "lag2",
+    "lag3",
+    "lag12",
+    "mean_last3",
+    "same_month_median",
+    "month_sin",
+    "month_cos",
+    "cell_lat",
+    "cell_lon"
+  ],
+  "grid": "2013-01 to 2026-07, missing = 0",
+  "n_cells": 24068,
+  "min_total_hotspots_per_cell": 5,
+  "train_years": "2014-2023 (2013 = history only)",
+  "validation_year": 2024,
+  "test_year": 2025,
+  "n_test_rows": 288816,
+  "validation_mae_by_learning_rate": {
+    "0.05": 1.2693,
+    "0.1": 3.7144
+  },
+  "test_2025": {
+    "model": {
+      "mae": 1.2842,
+      "rmse": 4.6967,
+      "top10_hit_rate": 0.6321
+    },
+    "seasonal_naive": {
+      "mae": 1.5196,
+      "rmse": 6.1019,
+      "top10_hit_rate": 0.5298
+    },
+    "climatology": {
+      "mae": 1.3564,
+      "rmse": 6.552,
+      "top10_hit_rate": 0.6157
+    }
+  },
+  "model_beats_seasonal_naive": true,
+  "model_beats_climatology": true,
+  "beats_rule": "model MAE and RMSE both lower than the baseline on 2025",
+  "top10_hit_rate_definition": "share of the top 10% of 2025 cell-months by actual count that are also in the top 10% by prediction",
+  "forecast_for": "2026-08",
+  "forecast_note": "final model refitted on all labelled months before predicting"
+}
