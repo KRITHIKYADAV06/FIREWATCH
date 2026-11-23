@@ -706,8 +706,12 @@ def area_map(hotspots_df=None):
     return aoi
 
 
-def globe_figure(cells_df, year=None):
-    """Create a globe showing detected hotspot density by grid cell."""
+def globe_figure(cells_df, year=None, aoi=None):
+    """Create a globe showing detected hotspot density by grid cell.
+
+    The globe is zoomed to India. If an AOI is given, its outline is drawn in
+    cyan on top of the national picture.
+    """
     if cells_df is None or cells_df.empty:
         return px.scatter_geo(
             title="No detected hotspots data available"
@@ -755,26 +759,60 @@ def globe_figure(cells_df, year=None):
         )
     )
 
+    # Cells with no hotspots that year add nothing to the picture.
+    grouped = grouped[grouped[value_col] > 0]
+    # A few very busy cells would make every other cell look pale; cap the
+    # colour scale at the 95th percentile (hover still shows the true count).
+    top = float(grouped[value_col].quantile(0.95)) if len(grouped) else 1.0
+
     fig = px.scatter_geo(
         grouped,
         lat="cell_lat",
         lon="cell_lon",
-        size=value_col,
         color=value_col,
         color_continuous_scale="YlOrRd",
+        range_color=(0, max(top, 1.0)),
         projection="orthographic",
         hover_data={
             "cell_id": True,
             "cell_lat": True,
             "cell_lon": True,
-            value_col: True,
+            value_col: ":.0f",
         },
+        labels={value_col: "Hotspots per cell<br>(colour capped at<br>95th percentile)"},
         title="Harmonized fire activity (VIIRS-equivalent hotspot counts)",
     )
+    # Small, fixed-size dots (one per 0.1° cell) so neighbouring cells do not
+    # merge into one blob; the colour shows how many hotspots each cell had.
+    fig.update_traces(marker=dict(size=3, opacity=0.85), selector=dict(type="scattergeo"))
+
+    centre_lat, centre_lon = 22.0, 79.0  # centre of India: whole country stays in view
+    if aoi is not None:
+        (lat0, lon0), (lat1, lon1) = _aoi_bounds(aoi)
+        if aoi["type"] == "polygon":
+            pieces = split_bridged_ring(aoi["coords"])
+        elif aoi["type"] == "bbox":
+            pieces = [[(lat0, lon0), (lat0, lon1), (lat1, lon1), (lat1, lon0)]]
+        else:  # point + radius: a circle of 72 points
+            lat, lon = aoi["coords"]
+            dlat = aoi["radius_km"] / 111.32
+            dlon = aoi["radius_km"] / max(111.32 * math.cos(math.radians(lat)), 1e-6)
+            pieces = [[(lat + dlat * math.sin(math.radians(a)), lon + dlon * math.cos(math.radians(a)))
+                       for a in range(0, 360, 5)]]
+        for k, piece in enumerate(pieces):
+            closed = list(piece) + [piece[0]]
+            fig.add_scattergeo(
+                lat=[p[0] for p in closed], lon=[p[1] for p in closed],
+                # Cyan stands out against the yellow-red hotspot colours.
+                mode="lines", line=dict(color="#00E5FF", width=3),
+                name="Selected area", showlegend=k == 0, hoverinfo="skip",
+            )
 
     fig.update_geos(
-        projection_rotation=dict(lat=22, lon=79),
+        projection_rotation=dict(lat=centre_lat, lon=centre_lon),
+        projection_scale=3.6,  # zoom in so India fills the globe
         showcountries=True,
+        countrycolor="#8a8a8a",
         showland=True,
         landcolor="#303030",
         showocean=True,
@@ -785,6 +823,9 @@ def globe_figure(cells_df, year=None):
     fig.update_layout(
         paper_bgcolor="#101820",
         font_color="white",
+        height=560,
+        margin=dict(l=0, r=0, t=50, b=0),
+        legend=dict(orientation="h", y=-0.02),
     )
 
     return fig

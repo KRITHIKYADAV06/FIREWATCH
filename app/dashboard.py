@@ -6,6 +6,7 @@ Run: streamlit run app/dashboard.py
 """
 from __future__ import annotations
 
+import calendar
 import json
 import math
 import sys
@@ -122,6 +123,26 @@ def build_rows(aoi: dict, end: str, version: tuple) -> list[dict]:
          for key, val in row.items()}
         for row in result.to_dict("records")
     ]
+
+
+@st.cache_data(show_spinner="Preparing Punjab and Haryana states and districts…")
+def region_rows(end: str, version: tuple) -> list[tuple[str, str, list[dict]]]:
+    """(id, name, rows) for each state and district in the boundaries file.
+
+    Computed once and cached for every visitor (about 15 s the first time).
+    """
+    boundaries = geo.load_boundaries()
+    if boundaries is None:
+        return []
+    out = []
+    for state in boundaries["states"]:  # Punjab, then Haryana
+        districts = boundaries["states"][state]["districts"]
+        for district in [geo.WHOLE_STATE] + list(districts):
+            aoi = normalize_aoi(geo.region_aoi(boundaries, state, district))
+            name = f"{state} (whole state)" if district == geo.WHOLE_STATE else f"{state} · {district}"
+            rid = f"{state}|{district}".replace(" ", "_")
+            out.append((rid, name, build_rows(aoi, end, version)))
+    return out
 
 
 @st.cache_data(show_spinner=False)
@@ -372,9 +393,25 @@ def page_map():
         try:
             monthly = da.load_cells_monthly()
             years = sorted(int(x) for x in monthly["year"].dropna().unique())
-            selected = st.select_slider("Globe year", options=years, value=years[-1])
-            st.caption("This is a national overview, not restricted to the selected AOI.")
-            st.plotly_chart(geo.globe_figure(monthly, year=selected), width="stretch")
+            # The last year may be incomplete (data runs only to the latest month).
+            months_in = monthly.loc[monthly["year"] == years[-1], "month"].dropna()
+            last_month = int(months_in.max()) if len(months_in) else 12
+            partial = last_month < 12
+
+            def year_label(y):
+                return f"{y} (Jan–{calendar.month_abbr[last_month]} only)" if partial and y == years[-1] else str(y)
+
+            default = years[-2] if partial and len(years) > 1 else years[-1]
+            selected = st.select_slider("Globe year", options=years, value=default,
+                                        format_func=year_label)
+            in_area = monthly[(monthly["year"] == selected)
+                              & monthly["cell_id"].isin(set(da.cells_in_aoi(aoi)))]
+            st.caption(
+                f"India-wide hotspots for {year_label(selected)}, harmonized. The cyan outline "
+                f"is your selected area ({aoi_label(aoi)}): "
+                f"**{in_area['harmonized_count'].sum():,.0f}** hotspots there that year."
+            )
+            st.plotly_chart(geo.globe_figure(monthly, year=selected, aoi=aoi), width="stretch")
         except (ValueError, KeyError, TypeError) as exc:
             st.error(f"Globe view unavailable: {exc}")
 
@@ -391,9 +428,16 @@ def page_dashboard():
         if not rows:
             st.info("No monthly observations are available for this area.")
             return
+        # The Area filter lists the area picked on the Map page first, then
+        # Punjab, Haryana and every district, so they can be compared here.
+        regions = [{"id": "aoi", "name": f"Selected area: {aoi_label(aoi)}"}]
+        monthly = {"aoi": rows}
+        for rid, name, rrows in region_rows(last, st.session_state["_data_version"]):
+            regions.append({"id": rid, "name": name})
+            monthly[rid] = rrows
         data = {
-            "regions": [{"id": "aoi", "name": "Selected area"}],
-            "monthly": {"aoi": rows},
+            "regions": regions,
+            "monthly": monthly,
             "validation": _validation(),
             "provisional_from": provisional_month(st.session_state["_data_version"]),
             "initial_start": st.session_state["start_month"],
