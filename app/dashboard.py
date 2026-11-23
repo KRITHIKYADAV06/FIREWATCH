@@ -38,18 +38,24 @@ MAP_LIMIT = 2_000
 PREVIEW_EXPORT_LIMIT = 20_000
 MAX_FULL_EXPORT_MONTHS = 12
 
+# Page colours (background, text, sidebar) come from .streamlit/config.toml,
+# which has a [theme.light] and a [theme.dark] palette. The CSS below must not
+# set a background or text colour: a fixed dark background made the text
+# invisible in light mode. Only see-through tints are used, so they work on both.
 st.markdown("""
 <style>
-  .stApp {background:linear-gradient(180deg,#071023 0%,#050912 60%); color:#E6ECF8;}
-  [data-testid="stSidebar"] {background:linear-gradient(180deg,#101d35,#080f20); border-right:1px solid #253755;}
+  [data-testid="stSidebar"] {border-right:1px solid rgba(127,140,165,.30);}
   h1,h2,h3 {letter-spacing:-.025em;}
-  [data-testid="stMetric"] {background:#101d32; border:1px solid #263956; border-radius:14px; padding:12px;}
+  [data-testid="stMetric"] {background:rgba(127,140,165,.10); border:1px solid rgba(127,140,165,.30);
+    border-radius:14px; padding:12px;}
   .fw-intro {border-left:4px solid #FF7A1A; padding:12px 18px; margin-bottom:16px;
-    background:linear-gradient(90deg,rgba(255,122,26,.10),rgba(12,20,42,.20)); border-radius:8px;}
-  .fw-overline {color:#FFAE6D; font-size:.78rem; letter-spacing:.20em; font-weight:700;}
-  .fw-intro h2 {margin:3px 0 0; font-size:1.55rem; color:#f5f7ff;}
-  .fw-intro p {margin:6px 0 0; color:#B4C0DA;}
-  [data-testid="stSidebar"] .stButton button {border:1px solid #39516e;}
+    background:linear-gradient(90deg,rgba(255,122,26,.12),rgba(255,122,26,0)); border-radius:8px;}
+  .fw-overline {color:inherit; font-size:.78rem; letter-spacing:.20em; font-weight:700;}
+  .fw-overline::before {content:""; display:inline-block; width:18px; height:2px; margin-right:8px;
+    vertical-align:middle; background:#FF7A1A;}
+  .fw-intro h2 {margin:3px 0 0; font-size:1.55rem; color:inherit;}
+  .fw-intro p {margin:6px 0 0; color:inherit; opacity:.85;}
+  [data-testid="stSidebar"] .stButton button {border:1px solid rgba(127,140,165,.45);}
 </style>
 """, unsafe_allow_html=True)
 
