@@ -130,9 +130,8 @@ def _select_region():
             key=f"region_district_{state}",  # one key per state, so a switch resets it
         )
     st.caption(
-        "Outlines: geoBoundaries (gbOpen). States: DataMeet India / Election Commission "
-        "of India, 2011, CC BY 2.5 IN. Districts: Pathways Data / lgdirectory.gov.in, "
-        "2021, ODbL 1.0. Districts created after 2021 are not listed separately."
+        "Outlines: © OpenStreetMap contributors (ODbL 1.0), simplified to about 200 m. "
+        "For analysis only, not an authoritative boundary map."
     )
     return region_aoi(boundaries, state, district)
 
@@ -291,6 +290,36 @@ def _aoi_area_km2(aoi):
     return aoi_area_km2(aoi)
 
 
+def _signed_area(ring):
+    """Signed shoelace area of a [(lat, lon), ...] ring; the sign tells the winding."""
+    total = 0.0
+    for (y1, x1), (y2, x2) in zip(ring, list(ring[1:]) + [ring[0]]):
+        total += x1 * y2 - x2 * y1
+    return total / 2.0
+
+
+def split_bridged_ring(coords):
+    """Split a ring built by src/build_boundaries.py back into its pieces.
+
+    The builder joins pieces as: piece0, then for each further piece
+    [anchor] + piece + [piece[0]], where anchor = piece0[0]. A plain polygon
+    (e.g. one drawn on the map) comes back unchanged as a single piece.
+    """
+    coords = [tuple(p) for p in coords]
+    anchor = coords[0]
+    cuts = [i for i in range(1, len(coords)) if coords[i] == anchor]
+    if not cuts:
+        return [coords]
+    pieces = [coords[:cuts[0]]]
+    for start, end in zip(cuts, cuts[1:] + [len(coords)]):
+        piece = coords[start + 1:end]
+        if len(piece) > 1 and piece[-1] == piece[0]:
+            piece = piece[:-1]  # drop the "bridge back" vertex
+        if len(piece) >= 3:
+            pieces.append(piece)
+    return pieces
+
+
 def _draw_selected_aoi(map_obj, aoi):
     """Draw the selected AOI and zoom the map to its bounds."""
     bounds = _aoi_bounds(aoi)
@@ -310,11 +339,17 @@ def _draw_selected_aoi(map_obj, aoi):
         ).add_to(map_obj)
 
     elif aoi["type"] == "polygon":
-        folium.Polygon(
-            locations=aoi["coords"],
-            name="Selected AOI",
-            **style,
-        ).add_to(map_obj)
+        # A district outline may be several pieces joined by zero-width bridges;
+        # draw each piece on its own so no bridge lines show. Holes: outline only.
+        pieces = split_bridged_ring(aoi["coords"])
+        outer_sign = _signed_area(pieces[0]) >= 0
+        for piece in pieces:
+            is_hole = (_signed_area(piece) >= 0) != outer_sign
+            folium.Polygon(
+                locations=piece,
+                name="Selected AOI",
+                **(dict(style, fillOpacity=0, weight=2) if is_hole else style),
+            ).add_to(map_obj)
 
     elif aoi["type"] == "point":
         lat, lon = aoi["coords"]
