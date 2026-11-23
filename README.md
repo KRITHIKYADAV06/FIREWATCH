@@ -6,6 +6,8 @@ NASA Space Apps Challenge 2026 · Challenge: *Harmonization of MODIS and VIIRS H
 
 🌐 **Live app:** https://firewatch-india.streamlit.app · 💻 **Code:** https://github.com/KRITHIKYADAV06/FIREWATCH
 
+> **Post-submission updates (23 Nov 2026):** improved light-theme readability, and a new State / district area picker for Punjab and Haryana that shows the selected area by name. The version submitted for judging on 15 Nov 2026 is tagged [`submission-2026-11-15`](https://github.com/KRITHIKYADAV06/FIREWATCH/tree/submission-2026-11-15).
+
 ---
 
 ## The problem
