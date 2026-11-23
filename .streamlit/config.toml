@@ -1,0 +1,15 @@
+# FIREWATCH theme. Streamlit uses [theme.light] or [theme.dark] depending on
+# the viewer's choice (Settings menu, or their system setting by default).
+# Colours are set here, not in CSS, so text always matches its background.
+
+[theme.light]
+primaryColor = "#C2410C"              # dark orange: 5.2:1 contrast on white
+backgroundColor = "#FFFFFF"
+secondaryBackgroundColor = "#F1F4FA"  # sidebar, inputs, expanders
+textColor = "#14213D"                 # navy text: 15:1 contrast
+
+[theme.dark]
+primaryColor = "#FF7A1A"              # FIREWATCH ember orange: 7.3:1 on navy
+backgroundColor = "#071023"
+secondaryBackgroundColor = "#101D35"  # sidebar, inputs, expanders
+textColor = "#E6ECF8"
