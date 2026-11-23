@@ -6,7 +6,13 @@ NASA Space Apps Challenge 2026 · Challenge: *Harmonization of MODIS and VIIRS H
 
 🌐 **Live app:** https://firewatch-india.streamlit.app · 💻 **Code:** https://github.com/KRITHIKYADAV06/FIREWATCH
 
-> **Post-submission updates (23 Nov 2026):** improved light-theme readability, and a new State / district area picker for Punjab and Haryana that shows the selected area by name. The version submitted for judging on 15 Nov 2026 is tagged [`submission-2026-11-15`](https://github.com/KRITHIKYADAV06/FIREWATCH/tree/submission-2026-11-15).
+> **Post-submission updates (23 Nov 2026):**
+> - **State / district picker** for Punjab (23 districts) and Haryana (22 districts), including the newer districts Malerkotla and Charkhi Dadri
+> - **Dashboard Area filter** lists your selected area, both states and every district
+> - **India-wide yearly globe** shows the hotspots for any year, with your selected area outlined
+> - **Light theme** with improved readability
+>
+> The version submitted for judging on 15 Nov 2026 is tagged [`submission-2026-11-15`](https://github.com/KRITHIKYADAV06/FIREWATCH/tree/submission-2026-11-15).
 
 ---
 
@@ -56,18 +62,21 @@ Charts: `outputs/charts/` · Details: [`docs/methodology.md`](docs/methodology.m
 
 ## Features
 
-- **Choose any area in India:** draw on the map or type coordinates
+- **Choose any area in India:** draw on the map, type coordinates, or pick a point and radius
+- **Pick a state or district:** Punjab or Haryana, as a whole state or any of their 45 districts (real outlines, shown by name)
 - **Burning-activity calendar:** which months and years burned most, 2003–2026
+- **Compare areas on the Dashboard:** the Area filter lists your selected area, Punjab, Haryana and every district
 - **Trends** over the years
 - **This month vs normal:** compared with the historical median; above the 90th percentile is flagged as unusual
 - **Spatial analysis** (map layers, below)
 - **Hotspot map** and **CSV downloads** (calendar and hotspots)
+- **India-wide yearly globe:** pick any year from 2003 to 2026 to see that year's hotspots across India, with your selected area outlined and its total for the year
 - **AI summary:** Google Gemini explains *only* FIREWATCH's computed numbers, labelled as AI-generated
 - **Weather context:** NASA POWER rainfall and temperature for the selected area
 
 ### Map & spatial analysis
 
-Users can select an area of interest by drawing a rectangle, circle or polygon on the map, or by entering latitude/longitude boundaries or a point with a radius. The selected area is analysed using a 0.1° grid, where a cell is included when its centre falls inside the selected area. The spatial analysis provides three layers: yearly fire hotspot trends (increasing, decreasing or no significant trend, using a Theil-Sen slope and the Mann-Kendall test), hot and cold spot clusters using the Getis-Ord Gi* method, and chronic burning areas where hotspots are detected in the selected months in at least 80% of the years. The map also displays detected hotspots within the selected area.
+Users can select an area of interest by drawing a rectangle, circle or polygon on the map, by entering latitude/longitude boundaries or a point with a radius, or by choosing a state (Punjab or Haryana) and, optionally, one of its districts. The selected area is analysed using a 0.1° grid, where a cell is included when its centre falls inside the selected area. The spatial analysis provides three layers: yearly fire hotspot trends (increasing, decreasing or no significant trend, using a Theil-Sen slope and the Mann-Kendall test), hot and cold spot clusters using the Getis-Ord Gi* method, and chronic burning areas where hotspots are detected in the selected months in at least 80% of the years. The map also displays detected hotspots within the selected area.
 
 ## How to run (Windows)
 
@@ -101,6 +110,7 @@ src/        harmonize, validation, forecast, data_access, grid, geo, spatial_ana
 tests/      automated tests (pytest)
 docs/       methodology, limitations, data contract, how to run
 outputs/    charts
+data/boundaries/  Punjab and Haryana state and district outlines (built by src/build_boundaries.py)
 ```
 
 ## Data
@@ -108,6 +118,7 @@ outputs/    charts
 - **NASA FIRMS** active fire archive: MODIS C6.1 (Aqua), VIIRS S-NPP, VIIRS NOAA-20, India, through **31 July 2026**
 - Vegetation fires only (type 0), nominal/high confidence, 0.1° grid
 - **NASA POWER** for weather context
+- **OpenStreetMap** administrative boundaries for the Punjab and Haryana state and district outlines (© OpenStreetMap contributors, ODbL 1.0), simplified to about 200 m. They are for analysis only, not an authoritative boundary map.
 
 ## Limitations
 
@@ -115,10 +126,11 @@ outputs/    charts
 - Zero detections are "zero FIRMS detections", **not proof that no fire occurred** (clouds, smoke and small fires can be missed).
 - Data runs through 31 July 2026; near-real-time data is future work.
 - The forecast is experimental and is not an official fire prediction.
+- A few very small districts or areas are smaller than one 0.1° grid cell, so analysis selects no cells there; use the whole state or a point and radius instead.
 
 ## Future work
 
-Near-real-time FIRMS data · state and district boundaries · land-cover context
+Near-real-time FIRMS data · state and district boundaries beyond Punjab and Haryana · land-cover context
 
 ## Team
 
@@ -137,7 +149,7 @@ We used Claude (Anthropic), ChatGPT (OpenAI) and Gemini (Google) as coding and w
 
 ## Acknowledgment
 
-We acknowledge the use of data and imagery from NASA's Fire Information for Resource Management System (FIRMS), part of NASA's Earth Science Data and Information System (ESDIS). Weather data: NASA POWER Project.
+We acknowledge the use of data and imagery from NASA's Fire Information for Resource Management System (FIRMS), part of NASA's Earth Science Data and Information System (ESDIS). Weather data: NASA POWER Project. State and district outlines: © OpenStreetMap contributors (ODbL 1.0).
 
 ## License
 
