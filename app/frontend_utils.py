@@ -51,7 +51,11 @@ def normalize_aoi(value: Any) -> dict:
                 raise ValueError("Invalid polygon coordinate")
             pts.append((lat, lon))
         # Geo module does full topology validation; this helper validates the transport contract.
-        return {"type": "polygon", "coords": pts}
+        result = {"type": "polygon", "coords": pts}
+        # Keep the name of a picked state/district (e.g. "Ludhiana district, Punjab").
+        if isinstance(value.get("name"), str) and value["name"].strip():
+            result["name"] = value["name"].strip()
+        return result
     raise ValueError(f"Unsupported AOI type: {kind}")
 
 
@@ -63,6 +67,8 @@ def aoi_label(aoi: dict) -> str:
     if aoi["type"] == "point":
         lat, lon = aoi["coords"]
         return f"Radius {aoi['radius_km']:g} km · {lat:.2f}°N, {lon:.2f}°E"
+    if aoi.get("name"):
+        return aoi["name"]
     return f"Polygon · {len(aoi['coords'])} vertices"
 
 

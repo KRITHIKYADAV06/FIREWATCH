@@ -1,3 +1,4 @@
+import json
 import math
 import pathlib
 import sys
@@ -83,6 +84,59 @@ def _sync_box_inputs(aoi):
     st.session_state["_box_sync_aoi"] = aoi.copy()
 
 
+BOUNDARIES_FILE = pathlib.Path(__file__).resolve().parents[1] / "data" / "boundaries" / "punjab_haryana.json"
+WHOLE_STATE = "Whole state"
+
+
+@st.cache_data(show_spinner=False)
+def load_boundaries():
+    """State and district outlines for the picker (built by src/build_boundaries.py).
+
+    Returns the parsed JSON, or None if the file is missing.
+    """
+    if not BOUNDARIES_FILE.is_file():
+        return None
+    return json.loads(BOUNDARIES_FILE.read_text(encoding="utf-8"))
+
+
+def region_aoi(boundaries, state, district=WHOLE_STATE):
+    """Polygon AOI dict for a state, or for one district of that state."""
+    state_data = boundaries["states"][state]
+    if district == WHOLE_STATE:
+        coords, name = state_data["coords"], f"{state} (whole state)"
+    else:
+        coords, name = state_data["districts"][district]["coords"], f"{district} district, {state}"
+    return {
+        "type": "polygon",
+        "coords": [(float(lat), float(lon)) for lat, lon in coords],
+        "name": name,
+    }
+
+
+def _select_region():
+    """State + district dropdowns. Returns the AOI dict, or None if no boundaries file."""
+    boundaries = load_boundaries()
+    if boundaries is None:
+        st.warning("Boundary file data/boundaries/punjab_haryana.json is missing.")
+        return None
+
+    c1, c2 = st.columns(2)
+    with c1:
+        state = st.selectbox("State", list(boundaries["states"]), key="region_state")
+    with c2:
+        district = st.selectbox(
+            "District",
+            [WHOLE_STATE] + list(boundaries["states"][state]["districts"]),
+            key=f"region_district_{state}",  # one key per state, so a switch resets it
+        )
+    st.caption(
+        "Outlines: geoBoundaries (gbOpen). States: DataMeet India / Election Commission "
+        "of India, 2011, CC BY 2.5 IN. Districts: Pathways Data / lgdirectory.gov.in, "
+        "2021, ODbL 1.0. Districts created after 2021 are not listed separately."
+    )
+    return region_aoi(boundaries, state, district)
+
+
 def _select_aoi():
     if "aoi" not in st.session_state:
         st.session_state["aoi"] = DEFAULT_AOI.copy()
@@ -91,12 +145,17 @@ def _select_aoi():
 
     choice = st.radio(
         "Choose your area",
-        ["Draw on map", "Box (lat/lon)", "Point + radius"],
+        ["Draw on map", "Box (lat/lon)", "Point + radius", "State / district"],
         horizontal=True,
         key="aoi_choice",
     )
 
     old_aoi = st.session_state["aoi"].copy()
+
+    if choice == "State / district":
+        region = _select_region()
+        if region is not None:
+            st.session_state["aoi"] = region
 
     if choice == "Box (lat/lon)":
         current = st.session_state["aoi"]
