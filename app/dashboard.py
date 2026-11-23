@@ -19,6 +19,41 @@ ROOT = Path(__file__).resolve().parents[1]
 sys.path.insert(0, str(ROOT / "src"))
 sys.path.insert(0, str(Path(__file__).resolve().parent))
 
+import importlib  # noqa: E402
+import os  # noqa: E402
+
+
+def _reload_changed_modules():
+    """Reload our own modules whose file changed since they were loaded.
+
+    Streamlit re-reads this script on every run, but NOT the modules it imports
+    from src/. After a code update on the server the app could otherwise run new
+    dashboard code with old geo/data_access code. Order matters: a module is
+    reloaded after the modules it imports from.
+    """
+    for name in _OWN_MODULES:
+        module = sys.modules.get(name)
+        if module is None or not getattr(module, "__file__", None):
+            continue  # not imported yet: the import below loads the current file
+        mtime = os.path.getmtime(module.__file__)
+        if getattr(module, "_fw_loaded_mtime", None) != mtime:
+            module = importlib.reload(module)
+            module._fw_loaded_mtime = mtime
+
+
+def _mark_loaded_modules():
+    """Remember the file time of modules imported fresh in this run."""
+    for name in _OWN_MODULES:
+        module = sys.modules.get(name)
+        if module is not None and getattr(module, "__file__", None) \
+                and not hasattr(module, "_fw_loaded_mtime"):
+            module._fw_loaded_mtime = os.path.getmtime(module.__file__)
+
+
+_OWN_MODULES = ("data_access", "grid", "spatial_analysis", "geo",
+                "frontend_utils", "ai_summary", "weather")
+_reload_changed_modules()
+
 import ai_summary  # noqa: E402
 import data_access as da  # noqa: E402
 import geo  # noqa: E402
@@ -27,6 +62,8 @@ from frontend_utils import (  # noqa: E402
     DEFAULT_AOI, aoi_label, clamp_month_range, file_signature,
     month_end, month_options, month_start, normalize_aoi, safe_script_json,
 )
+
+_mark_loaded_modules()
 
 st.set_page_config(page_title="FIREWATCH | NASA Satellite Fire Monitor", page_icon="🔥", layout="wide")
 
